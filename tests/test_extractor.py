@@ -26,6 +26,7 @@ class TestExtractor:
     PY_NO_EXERCISE = 'noexercise.py'
     ZIP_FILES = ('Upload_1.zip', 'zipfiletest.zip')
     ZIP_BOMB_FILE = 'zipbomb.zip'
+    ZIP_FAKE_FILE = 'fake_zipfile.zip'
 
     def setup_method(self):
         self.ipynb_file = self.ipynb_file()
@@ -42,6 +43,7 @@ class TestExtractor:
             (self.PY_NO_EXERCISE,),
         ))
         self.zipfile_file = next(self.zip_files((self.IGNORE_FILES_ZIP_NAME,)))
+        self.zipfile_fakefile = next(self.zip_files((self.ZIP_FAKE_FILE,)))
         self.ipynb_storage = FileStorage(self.ipynb_file)
         self.image_storage = FileStorage(self.image_file)
         self.image_no_exercise_storage = FileStorage(
@@ -56,6 +58,9 @@ class TestExtractor:
         )
         self.zipfile_storage = self.create_zipfile_storage(
             self.zipfile_file, self.IGNORE_FILES_ZIP_NAME,
+        )
+        self.zipfakefile_storage = self.create_zipfile_storage(
+            self.zipfile_fakefile, self.ZIP_FAKE_FILE,
         )
         self.zipfiles_extractor_files = list(self.zip_files(self.ZIP_FILES))
         self.zipfiles_extractors_bytes_io = list(self.get_bytes_io_zip_files(
@@ -72,6 +77,7 @@ class TestExtractor:
         self.image_no_exercise_file.close()
         self.pyfile_no_exercise_file.close()
         self.zipfile_file.close()
+        self.zipfile_fakefile.close()
         self.zipbomb_file_list[0].close()
         for py_file in self.pyfiles_files:
             py_file.close()
@@ -175,6 +181,10 @@ class TestExtractor:
             for exercise_path in exercises_paths
         )
 
+    def test_bad_zipfile(self):
+        result = zipfilearchive.Ziparchive(to_extract=self.zipfakefile_storage)
+        assert result.is_zipfile is False
+
     def test_zip(self, course: Course, student_user: User):
         conftest.create_exercise(course, 1)
         conftest.create_exercise(course, 2)
@@ -254,3 +264,4 @@ class TestExtractor:
             'file': self.pyfile_different_course,
         })
         assert success_upload_response.status_code == 200
+
